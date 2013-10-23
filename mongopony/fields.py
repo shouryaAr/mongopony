@@ -6,3 +6,6 @@ class SimpleField(object):
 
 class StringField(SimpleField):
     pass
+
+class IntField(SimpleField):
+    pass

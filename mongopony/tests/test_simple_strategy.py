@@ -1,7 +1,7 @@
 from .base import ConnectionMixin
 from unittest import TestCase
 from ..collection import Collection
-from ..strategy import ClassFieldDelegator, SimpleStrategy
+from ..mapper import ClassFieldDelegator, SimpleMapper
 from .. import fields
 from .. import local_config
 
@@ -14,33 +14,33 @@ class Athlete(Person):
     pass
 
 
-class SimplePeopleStrategy(SimpleStrategy):
+class SimplePeopleMapper(SimpleMapper):
     model = Person
 
     first_name = fields.StringField()
     last_name = fields.StringField(default='Smith')
 
 
-class SimpleAthleteStrategy(SimplePeopleStrategy):
+class SimpleAthleteMapper(SimplePeopleMapper):
     model = Athlete
 
 
-class ClassFieldStrategy(ClassFieldDelegator):
+class ClassFieldMapper(ClassFieldDelegator):
     name_to_mapper = {
-        'Athlete': SimpleAthleteStrategy,
-        'Person': SimplePeopleStrategy,
+        'Athlete': SimpleAthleteMapper,
+        'Person': SimplePeopleMapper,
     }
-    default_mapper = SimplePeopleStrategy
+    default_mapper = SimplePeopleMapper
 
 
 class People(Collection):
     collection_name = 'people'
-    document_strategy = ClassFieldStrategy
+    document_strategy = ClassFieldMapper
 
 
-class TestSimpleStrategy(ConnectionMixin, TestCase):
+class TestSimpleMapper(ConnectionMixin, TestCase):
     def setUp(self):
-        super(TestSimpleStrategy, self).setUp()
+        super(TestSimpleMapper, self).setUp()
         db_name = local_config.db_prefix + '_db'
         self.client.drop_database(db_name)
         self.db = getattr(self.client, db_name)
@@ -71,28 +71,28 @@ class TestSimpleStrategy(ConnectionMixin, TestCase):
         self.assertEquals(person.first_name, 'Colin')
 
 
-class AliasedPeopleStrategy(SimpleStrategy):
+class AliasedPeopleMapper(SimpleMapper):
     model = Person
 
     first_name = fields.StringField(field_name='f')
     last_name = fields.StringField(field_name='l')
 
 
-class AliasedAthleteStrategy(AliasedPeopleStrategy):
+class AliasedAthleteMapper(AliasedPeopleMapper):
     model = Athlete
 
 
-class AliasedClassFieldStrategy(ClassFieldDelegator):
+class AliasedClassFieldMapper(ClassFieldDelegator):
     name_to_mapper = {
-        'Athlete': AliasedAthleteStrategy,
-        'Person': AliasedPeopleStrategy,
+        'Athlete': AliasedAthleteMapper,
+        'Person': AliasedPeopleMapper,
     }
-    default_mapper = AliasedPeopleStrategy
+    default_mapper = AliasedPeopleMapper
 
 
 class Aliased(Collection):
     collection_name = 'aliased'
-    document_strategy = AliasedClassFieldStrategy
+    document_strategy = AliasedClassFieldMapper
 
 
 class TestAliasing(ConnectionMixin, TestCase):
