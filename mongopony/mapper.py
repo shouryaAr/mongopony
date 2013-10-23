@@ -1,4 +1,4 @@
-from fields import SimpleField
+from fields import SimpleField, ComplexField
 
 _field_cache = {}
 
@@ -33,10 +33,23 @@ class SimpleMapper(object):
 
     @classmethod
     def get_alias(cls, field_name):
+        if '.' in field_name:
+            field_name, children = field_name.split('.', 1)
+        else:
+            children = None
+
         fields = _get_field_cache(cls)
         if field_name in fields:
             field_cls = fields[field_name]
-            return field_cls.field_name
+
+            if children:
+                if not isinstance(field_cls, ComplexField):
+                    raise ValueError('%s is not a ComplexField' % field_name)
+                return "%s.%s" % (
+                    field_cls.field_name or field_name,
+                    field_cls.mapper.get_alias(children))
+            else:
+                return field_cls.field_name
         return None
 
     @classmethod
@@ -46,7 +59,12 @@ class SimpleMapper(object):
         dic = {}
         for field_name, field_cls in fields.iteritems():
             db_field_name = field_cls.field_name or field_name
-            dic[db_field_name] = getattr(instance, field_name)
+            if isinstance(field_cls, ComplexField):
+                value = field_cls.to_dict(instance, field_name)
+            else:
+                value = getattr(instance, field_name)
+
+            dic[db_field_name] = value
 
         return dic
 

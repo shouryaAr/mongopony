@@ -14,6 +14,8 @@ class QueryPlan(object):
             clause = self.collection_cls.document_strategy.get_alias(clause)
             new_filters[clause] = expr
 
+        print new_filters
+
         return new_filters
 
     def _cursor(self):
