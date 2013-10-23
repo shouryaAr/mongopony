@@ -5,9 +5,23 @@ class QueryPlan(object):
         self.collection_name = collection_cls.collection_name
         self.filters = {}
 
+    def _apply_aliasing(self, filters):
+        if not hasattr(self.collection_cls, 'document_strategy'):
+            return filters
+
+        new_filters = {}
+        for clause, expr in filters.iteritems():
+            clause = self.collection_cls.document_strategy.get_alias(clause)
+            new_filters[clause] = expr
+
+        return new_filters
+
     def _cursor(self):
         coll = getattr(self.db, self.collection_name)
-        return coll.find(self.filters)
+
+        filters = self._apply_aliasing(self.filters)
+
+        return coll.find(filters)
 
     def filter(self, filters):
         self.filters = filters

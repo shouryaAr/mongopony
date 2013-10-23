@@ -8,6 +8,11 @@ class CustomPeopleStrategy(object):
     def dict_to_object(doc):
         return Person(doc['first_name'])
 
+    
+    @classmethod
+    def get_alias(cls, field_name):
+        return field_name
+
 class People(Collection):
     collection_name = 'people'
     document_strategy = CustomPeopleStrategy
