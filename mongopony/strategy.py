@@ -36,3 +36,23 @@ class SimpleStrategy(object):
         field_cls = fields[field_name]
         return field_cls.field_name or field_name
 
+class ClassFieldDelegator(object):
+    @classmethod
+    def dict_to_object(cls, doc):
+        cls_name = doc.get('_cls')
+        mapper = cls.name_to_mapper.get(cls_name)
+        if not mapper:
+            mapper = cls.default_mapper
+
+        return mapper.dict_to_object(doc)
+
+    @classmethod
+    def get_alias(cls, field_name):
+        strategies = set(cls.name_to_mapper.values())
+        strategies.add(cls.default_mapper)
+
+        for strategy in strategies:
+            alias = strategy.get_alias(field_name)
+            if alias:
+                return alias
+        return None

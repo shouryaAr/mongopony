@@ -1,7 +1,7 @@
 from .base import ConnectionMixin
 from unittest import TestCase
 from ..collection import Collection
-from ..strategy import SimpleStrategy
+from ..strategy import ClassFieldDelegator, SimpleStrategy
 from .. import fields
 from .. import local_config
 
@@ -25,22 +25,13 @@ class SimpleAthleteStrategy(SimplePeopleStrategy):
     model = Athlete
 
 
-class ClassFieldStrategy(object):
-    @classmethod
-    def dict_to_object(cls, doc):
-        if doc.get('_cls') == 'Athlete':
-            return SimpleAthleteStrategy.dict_to_object(doc)
-        else:
-            return SimplePeopleStrategy.dict_to_object(doc)
+class ClassFieldStrategy(ClassFieldDelegator):
+    name_to_mapper = {
+        'Athlete': SimpleAthleteStrategy,
+        'Person': SimplePeopleStrategy,
+    }
+    default_mapper = SimplePeopleStrategy
 
-    @classmethod
-    def get_alias(cls, field_name):
-        strategies = {SimplePeopleStrategy, SimpleAthleteStrategy}
-        for strategy in strategies:
-            alias = strategy.get_alias(field_name)
-            if alias:
-                return alias
-        return None
 
 class People(Collection):
     collection_name = 'people'
@@ -91,22 +82,12 @@ class AliasedAthleteStrategy(AliasedPeopleStrategy):
     model = Athlete
 
 
-class AliasedClassFieldStrategy(object):
-    @classmethod
-    def dict_to_object(cls, doc):
-        if doc.get('_cls') == 'Athlete':
-            return AliasedAthleteStrategy.dict_to_object(doc)
-        else:
-            return AliasedPeopleStrategy.dict_to_object(doc)
-
-    @classmethod
-    def get_alias(cls, field_name):
-        strategies = {AliasedPeopleStrategy, AliasedAthleteStrategy}
-        for strategy in strategies:
-            alias = strategy.get_alias(field_name)
-            if alias:
-                return alias
-        return None
+class AliasedClassFieldStrategy(ClassFieldDelegator):
+    name_to_mapper = {
+        'Athlete': AliasedAthleteStrategy,
+        'Person': AliasedPeopleStrategy,
+    }
+    default_mapper = AliasedPeopleStrategy
 
 
 class Aliased(Collection):
