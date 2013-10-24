@@ -34,10 +34,7 @@ class QueryPlan(object):
         return [self._dict_to_object(doc) for doc in self._cursor()]
 
     def _dict_to_object(self, doc):
-        strategy = getattr(self.collection_cls, 'document_strategy')
-        if strategy:
-            doc = strategy.dict_to_object(doc, self.only_fields)
-        return doc
+        return self.collection_cls.dict_to_object(doc, self.only_fields)
 
     def count(self):
         return self._cursor().count()
