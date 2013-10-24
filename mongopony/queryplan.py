@@ -4,6 +4,7 @@ class QueryPlan(object):
         self.collection_cls = collection_cls
         self.collection_name = collection_cls.collection_name
         self.filters = {}
+        self.only_fields = None
 
     def _apply_aliasing(self, filters):
         if not hasattr(self.collection_cls, 'document_strategy'):
@@ -14,8 +15,6 @@ class QueryPlan(object):
             clause = self.collection_cls.document_strategy.get_alias(clause)
             new_filters[clause] = expr
 
-        print new_filters
-
         return new_filters
 
     def _cursor(self):
@@ -23,11 +22,13 @@ class QueryPlan(object):
 
         filters = self._apply_aliasing(self.filters)
 
-        return coll.find(filters)
+        return coll.find(filters, fields=self.only_fields)
 
     def filter(self, filters):
         self.filters = filters
-        pass
+
+    def only(self, fields):
+        self.only_fields = fields
 
     def as_list(self):
         return [self._dict_to_object(doc) for doc in self._cursor()]
@@ -35,7 +36,7 @@ class QueryPlan(object):
     def _dict_to_object(self, doc):
         strategy = getattr(self.collection_cls, 'document_strategy')
         if strategy:
-            doc = strategy.dict_to_object(doc)
+            doc = strategy.dict_to_object(doc, self.only_fields)
         return doc
 
     def count(self):

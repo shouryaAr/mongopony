@@ -70,6 +70,14 @@ class TestSimpleMapper(ConnectionMixin, TestCase):
         self.assertTrue(isinstance(person, Athlete))
         self.assertEquals(person.first_name, 'Colin')
 
+    def test_subset_of_fields(self):
+        self.db.people.insert({'first_name': 'Colin'})
+
+        query_plan = People.prepare_query(self.db)
+        query_plan.only('first_name')
+        person, = query_plan.as_list()
+        self.assertFalse(hasattr(person, 'last_name'))
+
 
 class AliasedPeopleMapper(SimpleMapper):
     model = Person

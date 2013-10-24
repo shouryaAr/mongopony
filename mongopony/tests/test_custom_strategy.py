@@ -5,7 +5,7 @@ from .. import local_config
 
 class CustomPeopleStrategy(object):
     @staticmethod
-    def dict_to_object(doc):
+    def dict_to_object(doc, only_fields):
         return Person(doc['first_name'])
 
     

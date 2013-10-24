@@ -1,2 +1,5 @@
 *.pyc
 local_config.py
+mongopony.egg-info
+build
+dist

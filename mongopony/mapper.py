@@ -19,12 +19,14 @@ def _get_field_cache(cls):
 
 class SimpleMapper(object):
     @classmethod
-    def dict_to_object(cls, doc):
+    def dict_to_object(cls, doc, only_fields):
         fields = _get_field_cache(cls)
         model = cls.model()
         model.id = doc['_id']
 
         for field_name, field_cls in fields.iteritems():
+            if only_fields and field_name not in only_fields:
+                continue
             db_field_name = field_cls.field_name or field_name
             field_value = doc.get(db_field_name, field_cls.default)
             setattr(model, field_name, field_value)
@@ -81,13 +83,13 @@ class SimpleMapper(object):
     
 class ClassFieldDelegator(object):
     @classmethod
-    def dict_to_object(cls, doc):
+    def dict_to_object(cls, doc, only_fields):
         cls_name = doc.get('_cls')
         mapper = cls.name_to_mapper.get(cls_name)
         if not mapper:
             mapper = cls.default_mapper
 
-        return mapper.dict_to_object(doc)
+        return mapper.dict_to_object(doc, only_fields)
 
     @classmethod
     def get_alias(cls, field_name):
