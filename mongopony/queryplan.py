@@ -33,6 +33,10 @@ class QueryPlan(object):
     def as_list(self):
         return [self._dict_to_object(doc) for doc in self._cursor()]
 
+    def as_generator(self):
+        for doc in self._cursor():
+            yield self._dict_to_object(doc)
+
     def _dict_to_object(self, doc):
         return self.collection_cls.dict_to_object(doc, self.only_fields)
 
