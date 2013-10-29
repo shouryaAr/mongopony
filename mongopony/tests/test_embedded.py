@@ -53,6 +53,7 @@ class TestListFields(ConnectionMixin, TestCase):
         self.assertTrue(isinstance(person, Person))
         self.assertEquals(person.first_name, 'Colin')
         self.assertEquals(person.last_name, 'Howe')
+        self.assertTrue(isinstance(person.tags[0], Tag))
 
     def test_embedded_query(self):
         person = PeopleMapper.create(

@@ -22,13 +22,22 @@ class SimpleMapper(object):
     def dict_to_object(cls, doc, only_fields):
         fields = _get_field_cache(cls)
         model = cls.model()
-        model.id = doc['_id']
+
+        # Embedded documents do not always have IDs
+        if '_id' in doc:
+            model.id = doc['_id']
 
         for field_name, field_cls in fields.iteritems():
             if only_fields and field_name not in only_fields:
                 continue
             db_field_name = field_cls.field_name or field_name
-            field_value = doc.get(db_field_name, field_cls.default)
+            if isinstance(field_cls, ComplexField):
+                if db_field_name in doc:
+                    field_value = field_cls.to_object(doc[db_field_name])
+                else:
+                    field_value = field_cls.default
+            else:
+                field_value = doc.get(db_field_name, field_cls.default)
             setattr(model, field_name, field_value)
 
         return model
