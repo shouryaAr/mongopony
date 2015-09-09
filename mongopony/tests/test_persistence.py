@@ -1,38 +1,26 @@
 from .base import ConnectionMixin
 from unittest import TestCase
+from ..base_documents import SimpleDocument
 from ..collection import Collection
-from ..mapper import ClassFieldDelegator, SimpleMapper
+from ..mapper import ClassFieldStrategy, SimpleMapper
 from .. import fields
 from .. import local_config
 
 
-class Person(object):
-    pass
-
-
-class Athlete(Person):
-    pass
-
-
-class PeopleMapper(SimpleMapper):
-    model = Person
-
+class Person(SimpleDocument):
     first_name = fields.StringField(field_name='f')
     last_name = fields.StringField(default='Smith')
 
 
-class AthleteMapper(PeopleMapper):
-    model = Athlete
-
+class Athlete(Person):
     age = fields.IntField()
 
 
-class ClassFieldMapper(ClassFieldDelegator):
-    name_to_mapper = {
-        'Athlete': AthleteMapper,
-        'Person': PeopleMapper,
+class ClassFieldMapper(ClassFieldStrategy):
+    name_to_model = {
+        'Athlete': Athlete,
+        'Person': Person,
     }
-    default_mapper = PeopleMapper
 
 
 class People(Collection):
@@ -48,7 +36,7 @@ class TestPeristence(ConnectionMixin, TestCase):
         self.db = getattr(self.client, db_name)
 
     def test_write_person(self):
-        person = PeopleMapper.create(first_name='Colin', last_name='Howe')
+        person = Person(first_name='Colin', last_name='Howe')
         People.persist(self.db, person)
 
         query_plan = People.prepare_query(self.db)

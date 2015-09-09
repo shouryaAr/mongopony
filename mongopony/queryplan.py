@@ -18,6 +18,8 @@ class QueryPlan(object):
         return new_filters
 
     def _cursor(self):
+        self.collection_cls.document_strategy.augment_query(self)
+
         coll = getattr(self.db, self.collection_name)
 
         filters = self._apply_aliasing(self.filters)

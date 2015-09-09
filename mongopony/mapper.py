@@ -90,23 +90,23 @@ class SimpleMapper(object):
             setattr(instance, field_name, kwargs[field_name])
         return instance
     
-class ClassFieldDelegator(object):
+class ClassFieldStrategy(object):
     @classmethod
     def dict_to_object(cls, doc, only_fields):
+        print doc
         cls_name = doc.get('_cls')
-        mapper = cls.name_to_mapper.get(cls_name)
+        mapper = cls.name_to_model.get(cls_name)
         if not mapper:
-            mapper = cls.default_mapper
+            raise Exception('Invalid class %s' % cls_name)
 
         return mapper.dict_to_object(doc, only_fields)
 
     @classmethod
     def get_alias(cls, field_name):
-        strategies = set(cls.name_to_mapper.values())
-        strategies.add(cls.default_mapper)
+        models = set(cls.name_to_model.values())
 
-        for strategy in strategies:
-            alias = strategy.get_alias(field_name)
+        for model in models:
+            alias = model.get_alias(field_name)
             if alias:
                 return alias
         return field_name
@@ -136,3 +136,10 @@ class ClassFieldDelegator(object):
         dic = mapper.object_to_dict(instance)
         dic['_cls'] = cls_name
         return dic
+
+
+    @classmethod
+    def augment_query(cls, plan):
+        only_fields = plan.only_fields
+        if only_fields and '_cls' not in only_fields:
+            only_fields.append('_cls')

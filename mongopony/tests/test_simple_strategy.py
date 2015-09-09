@@ -4,38 +4,28 @@ from ..collection import Collection
 from ..mapper import ClassFieldDelegator, SimpleMapper
 from .. import fields
 from .. import local_config
+from ..base_documents import SimpleDocument
 
 
-class Person(object):
-    pass
+class Person(SimpleDocument):
+    first_name = fields.StringField()
+    last_name = fields.StringField(default='Smith')
 
 
 class Athlete(Person):
     pass
 
 
-class SimplePeopleMapper(SimpleMapper):
-    model = Person
-
-    first_name = fields.StringField()
-    last_name = fields.StringField(default='Smith')
-
-
-class SimpleAthleteMapper(SimplePeopleMapper):
-    model = Athlete
-
-
-class ClassFieldMapper(ClassFieldDelegator):
-    name_to_mapper = {
-        'Athlete': SimpleAthleteMapper,
-        'Person': SimplePeopleMapper,
+class PersonStrategy(ClassFieldDelegator):
+    name_to_model = {
+        'Athlete': Athlete,
+        'Person': Person,
     }
-    default_mapper = SimplePeopleMapper
 
 
 class People(Collection):
     collection_name = 'people'
-    document_strategy = ClassFieldMapper
+    document_strategy = PersonStrategy
 
 
 class TestSimpleMapper(ConnectionMixin, TestCase):
@@ -46,7 +36,7 @@ class TestSimpleMapper(ConnectionMixin, TestCase):
         self.db = getattr(self.client, db_name)
 
     def test_filter_returns_people(self):
-        self.db.people.insert({'first_name': 'Colin'})
+        self.db.people.insert({'first_name': 'Colin', '_cls': 'Person'})
 
         query_plan = People.prepare_query(self.db)
         query_plan.filter({'first_name': 'Colin'})
@@ -55,7 +45,7 @@ class TestSimpleMapper(ConnectionMixin, TestCase):
         self.assertEquals(person.first_name, 'Colin')
 
     def test_default(self):
-        self.db.people.insert({'first_name': 'Colin'})
+        self.db.people.insert({'first_name': 'Colin', '_cls': 'Person'})
 
         query_plan = People.prepare_query(self.db)
         person, = query_plan.as_list()
@@ -71,34 +61,33 @@ class TestSimpleMapper(ConnectionMixin, TestCase):
         self.assertEquals(person.first_name, 'Colin')
 
     def test_subset_of_fields(self):
-        self.db.people.insert({'first_name': 'Colin'})
+        self.db.people.insert({'first_name': 'Colin', '_cls': 'Person'})
 
         query_plan = People.prepare_query(self.db)
-        query_plan.only('first_name')
+        query_plan.only(['first_name'])
         person, = query_plan.as_list()
         self.assertFalse(hasattr(person, 'last_name'))
 
 
-class AliasedPeopleMapper(SimpleMapper):
+class AliasedPerson(SimpleDocument):
     model = Person
 
     first_name = fields.StringField(field_name='f')
     last_name = fields.StringField(field_name='l')
 
 
-class AliasedAthleteMapper(AliasedPeopleMapper):
+class AliasedAthlete(AliasedPerson):
     model = Athlete
 
 
-class AliasedClassFieldMapper(ClassFieldDelegator):
-    name_to_mapper = {
-        'Athlete': AliasedAthleteMapper,
-        'Person': AliasedPeopleMapper,
+class AliasedClassFieldMapper(ClassFieldStrategy):
+    name_to_model = {
+        'Athlete': AliasedAthlete,
+        'Person': AliasedPerson,
     }
-    default_mapper = AliasedPeopleMapper
 
 
-class Aliased(Collection):
+class AliasedPeople(Collection):
     collection_name = 'aliased'
     document_strategy = AliasedClassFieldMapper
 
@@ -111,19 +100,17 @@ class TestAliasing(ConnectionMixin, TestCase):
         self.db = getattr(self.client, db_name)
 
     def test_document_aliasing(self):
-        self.db.aliased.insert({'f': 'Colin', 'l': 'Howe'})
-        query_plan = Aliased.prepare_query(self.db)
+        self.db.aliased.insert({'f': 'Colin', 'l': 'Howe', '_cls': 'Person'})
+        query_plan = AliasedPeople.prepare_query(self.db)
         person, = query_plan.as_list()
         self.assertEquals(person.first_name, 'Colin')
         self.assertEquals(person.last_name, 'Howe')
 
     def test_query_aliasing(self):
-        self.db.aliased.insert({'f': 'Colin', 'l': 'Howe'})
-        self.db.aliased.insert({'f': 'Chris', 'l': 'Howe'})
-        query_plan = Aliased.prepare_query(self.db)
+        self.db.aliased.insert({'f': 'Colin', 'l': 'Howe', '_cls': 'Person'})
+        self.db.aliased.insert({'f': 'Chris', 'l': 'Howe', '_cls': 'Person'})
+        query_plan = AliasedPeople.prepare_query(self.db)
         query_plan.filter({'first_name': 'Colin'})
         person, = query_plan.as_list()
         self.assertEquals(person.first_name, 'Colin')
         self.assertEquals(person.last_name, 'Howe')
-
-
