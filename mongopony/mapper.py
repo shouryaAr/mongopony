@@ -60,7 +60,7 @@ class SimpleMapper(object):
                     field_cls.field_name or field_name,
                     field_cls.mapper.get_alias(children))
             else:
-                return field_cls.field_name
+                return field_cls.field_name or field_name
         return None
 
     @classmethod

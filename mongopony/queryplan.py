@@ -4,7 +4,9 @@ class QueryPlan(object):
         self.collection_cls = collection_cls
         self.collection_name = collection_cls.collection_name
         self.filters = {}
+        self.ordering = None
         self.only_fields = None
+        self.read_preference = None
 
     def _apply_aliasing(self, filters):
         if not hasattr(self.collection_cls, 'document_strategy'):
@@ -22,7 +24,14 @@ class QueryPlan(object):
 
         filters = self._apply_aliasing(self.filters)
 
-        return coll.find(filters, fields=self.only_fields)
+        kwargs = {}
+        if self.read_preference:
+            kwargs['read_preference'] = self.read_preference
+        cursor = coll.find(filters, fields=self.only_fields, **kwargs)
+        if self.ordering:
+            cursor = cursor.sort(self.ordering)
+
+        return cursor
 
     def filter(self, filters):
         self.filters = filters
@@ -42,3 +51,9 @@ class QueryPlan(object):
 
     def count(self):
         return self._cursor().count()
+
+    def order_by(self, *ordering):
+        self.ordering = list(ordering)
+
+    def read_preference(self, read_preference):
+        self.read_preference = read_preference
