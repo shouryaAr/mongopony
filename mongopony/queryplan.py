@@ -24,10 +24,9 @@ class QueryPlan(object):
 
         filters = self._apply_aliasing(self.filters)
 
-        kwargs = {}
         if self._read_preference:
-            kwargs['read_preference'] = self._read_preference
-        cursor = coll.find(filters, projection=self.only_fields, **kwargs)
+            coll = coll.with_options(read_preference=self._read_preference)
+        cursor = coll.find(filters, projection=self.only_fields)
         if self.ordering:
             cursor = cursor.sort(self.ordering)
 
