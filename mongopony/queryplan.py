@@ -27,7 +27,7 @@ class QueryPlan(object):
         kwargs = {}
         if self._read_preference:
             kwargs['read_preference'] = self._read_preference
-        cursor = coll.find(filters, fields=self.only_fields, **kwargs)
+        cursor = coll.find(filters, projection=self.only_fields, **kwargs)
         if self.ordering:
             cursor = cursor.sort(self.ordering)
 

@@ -46,7 +46,7 @@ setup(name='mongopony',
       long_description=LONG_DESCRIPTION,
       platforms=['any'],
       classifiers=CLASSIFIERS,
-      install_requires=['pymongo>=2.5'],
+      install_requires=['pymongo>=3.0'],
       test_suite='mongopony.tests',
       tests_require=['nose>=1.2']
 )
